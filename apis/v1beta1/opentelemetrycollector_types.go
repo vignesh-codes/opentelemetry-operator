@@ -143,6 +143,10 @@ type OpenTelemetryCollectorSpec struct {
 	// If not specified, it will default to "<name>-headless".
 	// +optional
 	ServiceName string `json:"serviceName,omitempty"`
+	// ServiceSelectorLabels allows adding custom labels to the service selector.
+	// These labels will be merged with the standard selector labels used by the operator.
+	// +optional
+	ServiceSelectorLabels map[string]string `json:"serviceSelectorLabels,omitempty"`
 }
 
 // TargetAllocatorEmbedded defines the configuration for the Prometheus target allocator, embedded in the

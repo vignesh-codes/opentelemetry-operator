@@ -221,3 +221,70 @@ func TestSelectorTALabels(t *testing.T) {
 	assert.Equal(t, "opentelemetry-targetallocator", labels["app.kubernetes.io/component"])
 	assert.Equal(t, naming.TargetAllocator(tainstance.Name), labels["app.kubernetes.io/name"])
 }
+
+func TestSelectorLabelsWithCustom(t *testing.T) {
+	// prepare
+	instance := metav1.ObjectMeta{
+		Name:      "my-opentelemetry-collector",
+		Namespace: "my-namespace",
+	}
+	customLabels := map[string]string{
+		"CUSTOM_KEY": "CUSTOM_VALUE",
+		"network":    "vpc-cni",
+	}
+
+	// test
+	result := SelectorLabelsWithCustom(instance, "opentelemetry-collector", customLabels)
+
+	// verify
+	expected := map[string]string{
+		"app.kubernetes.io/component":  "opentelemetry-collector",
+		"app.kubernetes.io/instance":   "my-namespace.my-opentelemetry-collector",
+		"app.kubernetes.io/managed-by": "opentelemetry-operator",
+		"app.kubernetes.io/part-of":    "opentelemetry",
+		"CUSTOM_KEY":                   "CUSTOM_VALUE",
+		"network":                      "vpc-cni",
+	}
+	assert.Equal(t, expected, result)
+}
+
+func TestSelectorLabelsWithCustomOverride(t *testing.T) {
+	// prepare
+	instance := metav1.ObjectMeta{
+		Name:      "my-opentelemetry-collector",
+		Namespace: "my-namespace",
+	}
+	customLabels := map[string]string{
+		"app.kubernetes.io/component": "custom-component",
+		"CUSTOM_KEY":                  "CUSTOM_VALUE",
+	}
+
+	// test
+	result := SelectorLabelsWithCustom(instance, "opentelemetry-collector", customLabels)
+
+	// verify
+	expected := map[string]string{
+		"app.kubernetes.io/component":  "custom-component", // overridden
+		"app.kubernetes.io/instance":   "my-namespace.my-opentelemetry-collector",
+		"app.kubernetes.io/managed-by": "opentelemetry-operator",
+		"app.kubernetes.io/part-of":    "opentelemetry",
+		"CUSTOM_KEY":                   "CUSTOM_VALUE",
+	}
+	assert.Equal(t, expected, result)
+}
+
+func TestSelectorLabelsWithCustomEmpty(t *testing.T) {
+	// prepare
+	instance := metav1.ObjectMeta{
+		Name:      "my-opentelemetry-collector",
+		Namespace: "my-namespace",
+	}
+	customLabels := map[string]string{}
+
+	// test
+	result := SelectorLabelsWithCustom(instance, "opentelemetry-collector", customLabels)
+
+	// verify - should be same as standard SelectorLabels
+	expected := SelectorLabels(instance, "opentelemetry-collector")
+	assert.Equal(t, expected, result)
+}

@@ -586,3 +586,59 @@ func TestServiceWithIpFamily(t *testing.T) {
 		assert.Equal(t, actual.Spec.IPFamilyPolicy, params.OtelCol.Spec.IpFamilyPolicy)
 	})
 }
+
+func TestServiceWithCustomSelectorLabels(t *testing.T) {
+	t.Run("should include custom selector labels in service", func(t *testing.T) {
+		params := deploymentParams()
+		params.OtelCol.Spec.ServiceSelectorLabels = map[string]string{
+			"CUSTOM_KEY": "CUSTOM_VALUE",
+			"network":    "vpc-cni",
+		}
+
+		actual, err := Service(params)
+		assert.NoError(t, err)
+		assert.NotNil(t, actual)
+
+		// Check that standard selector labels are present
+		assert.Equal(t, "opentelemetry-operator", actual.Spec.Selector["app.kubernetes.io/managed-by"])
+		assert.Equal(t, "default.test", actual.Spec.Selector["app.kubernetes.io/instance"])
+		assert.Equal(t, "opentelemetry", actual.Spec.Selector["app.kubernetes.io/part-of"])
+		assert.Equal(t, "opentelemetry-collector", actual.Spec.Selector["app.kubernetes.io/component"])
+
+		// Check that custom selector labels are present
+		assert.Equal(t, "CUSTOM_VALUE", actual.Spec.Selector["CUSTOM_KEY"])
+		assert.Equal(t, "vpc-cni", actual.Spec.Selector["network"])
+	})
+
+	t.Run("should allow custom labels to override standard labels", func(t *testing.T) {
+		params := deploymentParams()
+		params.OtelCol.Spec.ServiceSelectorLabels = map[string]string{
+			"app.kubernetes.io/component": "custom-component",
+			"CUSTOM_KEY":                  "CUSTOM_VALUE",
+		}
+
+		actual, err := Service(params)
+		assert.NoError(t, err)
+		assert.NotNil(t, actual)
+
+		// Check that custom label overrides standard label
+		assert.Equal(t, "custom-component", actual.Spec.Selector["app.kubernetes.io/component"])
+		assert.Equal(t, "CUSTOM_VALUE", actual.Spec.Selector["CUSTOM_KEY"])
+	})
+
+	t.Run("should work with empty custom selector labels", func(t *testing.T) {
+		params := deploymentParams()
+		params.OtelCol.Spec.ServiceSelectorLabels = map[string]string{}
+
+		actual, err := Service(params)
+		assert.NoError(t, err)
+		assert.NotNil(t, actual)
+
+		// Check that only standard selector labels are present
+		assert.Equal(t, "opentelemetry-operator", actual.Spec.Selector["app.kubernetes.io/managed-by"])
+		assert.Equal(t, "default.test", actual.Spec.Selector["app.kubernetes.io/instance"])
+		assert.Equal(t, "opentelemetry", actual.Spec.Selector["app.kubernetes.io/part-of"])
+		assert.Equal(t, "opentelemetry-collector", actual.Spec.Selector["app.kubernetes.io/component"])
+		assert.Len(t, actual.Spec.Selector, 4)
+	})
+}

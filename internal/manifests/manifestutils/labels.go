@@ -101,3 +101,16 @@ func AddExtraLabels(logger *logr.Logger, labels map[string]string, extraLabels m
 		labels[k] = v
 	}
 }
+
+// SelectorLabelsWithCustom returns the common selector labels merged with custom selector labels.
+// Custom labels will override standard labels if there are conflicts.
+func SelectorLabelsWithCustom(instance metav1.ObjectMeta, component string, customLabels map[string]string) map[string]string {
+	selectorLabels := SelectorLabels(instance, component)
+	
+	// Merge custom labels, allowing them to override standard labels
+	for k, v := range customLabels {
+		selectorLabels[k] = v
+	}
+	
+	return selectorLabels
+}

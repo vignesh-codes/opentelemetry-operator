@@ -85,7 +85,7 @@ func MonitoringService(params manifests.Params) (*corev1.Service, error) {
 			Annotations: annotations,
 		},
 		Spec: corev1.ServiceSpec{
-			Selector:  manifestutils.SelectorLabels(params.OtelCol.ObjectMeta, ComponentOpenTelemetryCollector),
+			Selector:  manifestutils.SelectorLabelsWithCustom(params.OtelCol.ObjectMeta, ComponentOpenTelemetryCollector, params.OtelCol.Spec.ServiceSelectorLabels),
 			ClusterIP: "",
 			Ports: []corev1.ServicePort{{
 				Name: "monitoring",
@@ -125,7 +125,7 @@ func ExtensionService(params manifests.Params) (*corev1.Service, error) {
 		},
 		Spec: corev1.ServiceSpec{
 			Ports:    ports,
-			Selector: manifestutils.SelectorLabels(params.OtelCol.ObjectMeta, ComponentOpenTelemetryCollector),
+			Selector: manifestutils.SelectorLabelsWithCustom(params.OtelCol.ObjectMeta, ComponentOpenTelemetryCollector, params.OtelCol.Spec.ServiceSelectorLabels),
 		},
 	}, nil
 }
@@ -194,7 +194,7 @@ func Service(params manifests.Params) (*corev1.Service, error) {
 		},
 		Spec: corev1.ServiceSpec{
 			InternalTrafficPolicy: &trafficPolicy,
-			Selector:              manifestutils.SelectorLabels(params.OtelCol.ObjectMeta, ComponentOpenTelemetryCollector),
+			Selector:              manifestutils.SelectorLabelsWithCustom(params.OtelCol.ObjectMeta, ComponentOpenTelemetryCollector, params.OtelCol.Spec.ServiceSelectorLabels),
 			ClusterIP:             "",
 			Ports:                 ports,
 			IPFamilies:            params.OtelCol.Spec.IpFamilies,
